@@ -1,4 +1,4 @@
-package com.reactnativecallpoc;
+package com.kadeno.reactnativecallpoc;
 
 import android.os.Build;
 import android.os.Bundle;

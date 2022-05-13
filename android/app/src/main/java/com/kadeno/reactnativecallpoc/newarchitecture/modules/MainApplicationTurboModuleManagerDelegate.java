@@ -1,4 +1,4 @@
-package com.reactnativecallpoc.newarchitecture.modules;
+package com.kadeno.reactnativecallpoc.newarchitecture.modules;
 
 import com.facebook.jni.HybridData;
 import com.facebook.react.ReactPackage;

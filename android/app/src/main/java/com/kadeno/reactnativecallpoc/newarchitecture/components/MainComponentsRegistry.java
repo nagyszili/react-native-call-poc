@@ -1,4 +1,4 @@
-package com.reactnativecallpoc.newarchitecture.components;
+package com.kadeno.reactnativecallpoc.newarchitecture.components;
 
 import com.facebook.jni.HybridData;
 import com.facebook.proguard.annotations.DoNotStrip;
