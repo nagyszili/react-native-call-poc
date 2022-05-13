@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "react-native-call-poc",
+    "slug": "react-native-call-poc",
+    "version": "1.0.0",
+    "assetBundlePatterns": [
+      "**/*"
+    ]
+  }
+}
