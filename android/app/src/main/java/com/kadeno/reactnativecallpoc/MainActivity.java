@@ -1,24 +1,11 @@
 package com.kadeno.reactnativecallpoc;
 
-import android.content.ComponentName;
-import android.content.Intent;
-import android.content.ServiceConnection;
-import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.IBinder;
-import android.os.Message;
-import android.os.Messenger;
-import android.view.Window;
-import android.view.WindowManager;
-import android.widget.Toast;
 
-import androidx.core.app.ActivityCompat;
 
 import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactActivityDelegate;
-import com.kadeno.reactnativecallpoc.sinch.SinchService;
 
 import expo.modules.ReactActivityDelegateWrapper;
 

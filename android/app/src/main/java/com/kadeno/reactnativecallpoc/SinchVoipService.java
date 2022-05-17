@@ -223,6 +223,11 @@ public class SinchVoipService extends Service {
     }
 
     private Runnable createClient(String appKey, String appSecret, String env, String userId, String userName, final boolean usePushNotification) {
+        this.APP_KEY = appKey;
+        this.ENVIRONMENT = env;
+        this.APP_SECRET = appSecret;
+        this.userId = userId;
+
         if (appKey != null) {
             if (appKey.equals("")) {
                 appKey = mSettings.getAppKey();
@@ -230,7 +235,6 @@ public class SinchVoipService extends Service {
                 mSettings.setStringWithKey("sinchAppKey", appKey);
             }
         } else {
-            this.APP_KEY = appKey;
             appKey = mSettings.getAppKey();
         }
 
@@ -238,7 +242,6 @@ public class SinchVoipService extends Service {
             if (appSecret.equals("")) {
                 appSecret = mSettings.getAppSecret();
             } else {
-                this.APP_SECRET = appSecret;
                 mSettings.setStringWithKey("sinchAppSecret", appSecret);
             }
         } else {
@@ -250,7 +253,6 @@ public class SinchVoipService extends Service {
             if (env.equals("")) {
                 env = mSettings.getEnv();
             } else {
-                this.ENVIRONMENT = env;
                 mSettings.setStringWithKey("sinchEnv", env);
             }
         } else {
@@ -261,7 +263,6 @@ public class SinchVoipService extends Service {
             if (userId.equals("")) {
                 userId = mSettings.getUserId();
             } else {
-                this.userId = userId;
                 mSettings.setStringWithKey("sinchUserId", userId);
             }
         } else {
@@ -429,6 +430,7 @@ public class SinchVoipService extends Service {
             if (mListener != null) {
                 mListener.onStarted();
             }
+
         }
 
         @Override
@@ -460,13 +462,13 @@ public class SinchVoipService extends Service {
 
         @Override
         public void onPushTokenRegistrationFailed(SinchError sinchError) {
-            Log.e(TAG,"onPushTokenRegistrationFailed");
+            Log.e(TAG,"onPushTokenRegistrationFailed " + sinchError.getMessage());
 
         }
 
         @Override
         public void onCredentialsRequired(ClientRegistration clientRegistration) {
-            Log.d(TAG,"onCredentialsRequired userId" + userId);
+            Log.d(TAG,"onCredentialsRequired userId: " + userId + ", APP_KEY:"+ APP_KEY + ", APP_SECRET: " + APP_SECRET);
             clientRegistration.register(JWT.create(APP_KEY, APP_SECRET, userId));
 
         }
@@ -479,7 +481,7 @@ public class SinchVoipService extends Service {
 
         @Override
         public void onUserRegistrationFailed(SinchError sinchError) {
-            Log.e(TAG,"onUserRegistrationFailed");
+            Log.e(TAG,"onUserRegistrationFailed "+ sinchError.getMessage());
         }
     }
 
@@ -551,6 +553,10 @@ public class SinchVoipService extends Service {
 
         public String getCallerName() {
             return callerName;
+        }
+
+        public String getUserId() {
+            return userId;
         }
 
         public VideoController getVideoController() {

@@ -4,8 +4,6 @@ import {
   StyleSheet,
   Text,
   View,
-  TouchableOpacity,
-  ScrollView,
   TextInput,
   Button,
 } from "react-native";
@@ -16,20 +14,6 @@ import CallManager from "./src/services/call-manager/CallManager";
 import { format, getNewUuid, getRandomNumber } from "./src/utils";
 
 BackgroundTimer.start();
-
-const hitSlop = { top: 10, left: 10, right: 10, bottom: 10 };
-
-// RNCallKeep.setup({
-//   ios: {
-//     appName: "CallKeepDemo",
-//   },
-//   android: {
-//     alertTitle: "Permissions required",
-//     alertDescription: "This application needs to access your phone accounts",
-//     cancelButton: "Cancel",
-//     okButton: "ok",
-//   },
-// });
 
 const isIOS = Platform.OS === "ios";
 const APP_SECRET = "secret";
@@ -43,144 +27,143 @@ export default function App() {
   const [calls, setCalls] = useState({}); // callKeep uuid: number
   const [userName, setUserName] = useState("");
   const [userToCall, setUserToCall] = useState("");
-  const [registeredName, setRegisterdName] = useState("Unregistered");
+  const [registeredName, setRegisteredName] = useState("Unregistered");
 
-  // const log = (text) => {
-  //   console.info(text);
-  //   setLog(logText + "\n" + text);
-  // };
+  const log = (text) => {
+    console.info(text);
+    setLog(logText + "\n" + text);
+  };
 
-  // const addCall = (callUUID, number) => {
-  //   setHeldCalls({ ...heldCalls, [callUUID]: false });
-  //   setCalls({ ...calls, [callUUID]: number });
-  // };
+  const addCall = (callUUID, number) => {
+    setHeldCalls({ ...heldCalls, [callUUID]: false });
+    setCalls({ ...calls, [callUUID]: number });
+  };
 
-  // const removeCall = (callUUID) => {
-  //   const { [callUUID]: _, ...updated } = calls;
-  //   const { [callUUID]: __, ...updatedHeldCalls } = heldCalls;
+  const removeCall = (callUUID) => {
+    const { [callUUID]: _, ...updated } = calls;
+    const { [callUUID]: __, ...updatedHeldCalls } = heldCalls;
 
-  //   setCalls(updated);
-  //   setCalls(updatedHeldCalls);
-  // };
+    setCalls(updated);
+    setCalls(updatedHeldCalls);
+  };
 
-  // const setCallHeld = (callUUID, held) => {
-  //   setHeldCalls({ ...heldCalls, [callUUID]: held });
-  // };
+  const setCallHeld = (callUUID, held) => {
+    setHeldCalls({ ...heldCalls, [callUUID]: held });
+  };
 
-  // const setCallMuted = (callUUID, muted) => {
-  //   setMutedCalls({ ...mutedCalls, [callUUID]: muted });
-  // };
+  const setCallMuted = (callUUID, muted) => {
+    setMutedCalls({ ...mutedCalls, [callUUID]: muted });
+  };
 
-  // const displayIncomingCall = (number) => {
-  //   const callUUID = getNewUuid();
-  //   addCall(callUUID, number);
+  const displayIncomingCall = (number) => {
+    const callUUID = getNewUuid();
+    addCall(callUUID, number);
 
-  //   log(`[displayIncomingCall] ${format(callUUID)}, number: ${number}`);
+    log(`[displayIncomingCall] ${format(callUUID)}, number: ${number}`);
 
-  //   RNCallKeep.displayIncomingCall(callUUID, number, number, "number", false);
-  // };
+    RNCallKeep.displayIncomingCall(callUUID, number, number, "number", false);
+  };
 
-  // const displayIncomingCallNow = () => {
-  //   displayIncomingCall(getRandomNumber());
-  // };
+  const displayIncomingCallNow = () => {
+    displayIncomingCall(getRandomNumber());
+  };
 
-  // const displayIncomingCallDelayed = () => {
-  //   BackgroundTimer.setTimeout(() => {
-  //     displayIncomingCall(getRandomNumber());
-  //   }, 3000);
-  // };
+  const displayIncomingCallDelayed = () => {
+    BackgroundTimer.setTimeout(() => {
+      displayIncomingCall(getRandomNumber());
+    }, 3000);
+  };
 
-  // const didReceiveStartCallAction = ({ handle }) => {
-  //   if (!handle) {
-  //     // @TODO: sometime we receive `didReceiveStartCallAction` with handle` undefined`
-  //     return;
-  //   }
-  //   const callUUID = getNewUuid();
-  //   addCall(callUUID, handle);
+  const didReceiveStartCallAction = ({ handle }) => {
+    if (!handle) {
+      // @TODO: sometime we receive `didReceiveStartCallAction` with handle` undefined`
+      return;
+    }
+    const callUUID = getNewUuid();
+    addCall(callUUID, handle);
 
-  //   log(`[didReceiveStartCallAction] ${callUUID}, number: ${handle}`);
+    log(`[didReceiveStartCallAction] ${callUUID}, number: ${handle}`);
 
-  //   RNCallKeep.startCall(callUUID, handle, handle);
+    RNCallKeep.startCall(callUUID, handle, handle);
 
-  //   BackgroundTimer.setTimeout(() => {
-  //     log(`[setCurrentCallActive] ${format(callUUID)}, number: ${handle}`);
-  //     RNCallKeep.setCurrentCallActive(callUUID);
-  //   }, 1000);
-  // };
+    BackgroundTimer.setTimeout(() => {
+      log(`[setCurrentCallActive] ${format(callUUID)}, number: ${handle}`);
+      RNCallKeep.setCurrentCallActive(callUUID);
+    }, 1000);
+  };
 
-  // const didPerformSetMutedCallAction = ({ muted, callUUID }) => {
-  //   const number = calls[callUUID];
-  //   log(
-  //     `[didPerformSetMutedCallAction] ${format(
-  //       callUUID
-  //     )}, number: ${number} (${muted})`
-  //   );
+  const didPerformSetMutedCallAction = ({ muted, callUUID }) => {
+    const number = calls[callUUID];
+    log(
+      `[didPerformSetMutedCallAction] ${format(
+        callUUID
+      )}, number: ${number} (${muted})`
+    );
 
-  //   setCallMuted(callUUID, muted);
-  // };
+    setCallMuted(callUUID, muted);
+  };
 
-  // const didToggleHoldCallAction = ({ hold, callUUID }) => {
-  //   const number = calls[callUUID];
-  //   log(
-  //     `[didToggleHoldCallAction] ${format(
-  //       callUUID
-  //     )}, number: ${number} (${hold})`
-  //   );
+  const didToggleHoldCallAction = ({ hold, callUUID }) => {
+    const number = calls[callUUID];
+    log(
+      `[didToggleHoldCallAction] ${format(
+        callUUID
+      )}, number: ${number} (${hold})`
+    );
 
-  //   setCallHeld(callUUID, hold);
-  // };
+    setCallHeld(callUUID, hold);
+  };
 
-  // const endCall = ({ callUUID }) => {
-  //   const handle = calls[callUUID];
-  //   log(`[endCall] ${format(callUUID)}, number: ${handle}`);
+  const endCall = ({ callUUID }) => {
+    const handle = calls[callUUID];
+    log(`[endCall] ${format(callUUID)}, number: ${handle}`);
 
-  //   removeCall(callUUID);
-  // };
+    removeCall(callUUID);
+  };
 
-  // const hangup = (callUUID) => {
-  //   RNCallKeep.endCall(callUUID);
-  //   removeCall(callUUID);
-  // };
+  const hangup = (callUUID) => {
+    RNCallKeep.endCall(callUUID);
+    removeCall(callUUID);
+  };
 
-  // const setOnHold = (callUUID, held) => {
-  //   const handle = calls[callUUID];
-  //   RNCallKeep.setOnHold(callUUID, held);
-  //   log(`[setOnHold: ${held}] ${format(callUUID)}, number: ${handle}`);
+  const setOnHold = (callUUID, held) => {
+    const handle = calls[callUUID];
+    RNCallKeep.setOnHold(callUUID, held);
+    log(`[setOnHold: ${held}] ${format(callUUID)}, number: ${handle}`);
 
-  //   setCallHeld(callUUID, held);
-  // };
+    setCallHeld(callUUID, held);
+  };
 
-  // const setOnMute = (callUUID, muted) => {
-  //   const handle = calls[callUUID];
-  //   RNCallKeep.setMutedCall(callUUID, muted);
-  //   log(`[setMutedCall: ${muted}] ${format(callUUID)}, number: ${handle}`);
+  const setOnMute = (callUUID, muted) => {
+    const handle = calls[callUUID];
+    RNCallKeep.setMutedCall(callUUID, muted);
+    log(`[setMutedCall: ${muted}] ${format(callUUID)}, number: ${handle}`);
 
-  //   setCallMuted(callUUID, muted);
-  // };
+    setCallMuted(callUUID, muted);
+  };
 
-  // useEffect(() => {
-
-  //   return () => {
-  //     RNCallKeep.removeEventListener("answerCall", answerCall);
-  //     RNCallKeep.removeEventListener(
-  //       "didPerformDTMFAction",
-  //       didPerformDTMFAction
-  //     );
-  //     RNCallKeep.removeEventListener(
-  //       "didReceiveStartCallAction",
-  //       didReceiveStartCallAction
-  //     );
-  //     RNCallKeep.removeEventListener(
-  //       "didPerformSetMutedCallAction",
-  //       didPerformSetMutedCallAction
-  //     );
-  //     RNCallKeep.removeEventListener(
-  //       "didToggleHoldCallAction",
-  //       didToggleHoldCallAction
-  //     );
-  //     RNCallKeep.removeEventListener("endCall", endCall);
-  //   };
-  // }, []);
+  useEffect(() => {
+    return () => {
+      RNCallKeep.removeEventListener("answerCall", answerCall);
+      RNCallKeep.removeEventListener(
+        "didPerformDTMFAction",
+        didPerformDTMFAction
+      );
+      RNCallKeep.removeEventListener(
+        "didReceiveStartCallAction",
+        didReceiveStartCallAction
+      );
+      RNCallKeep.removeEventListener(
+        "didPerformSetMutedCallAction",
+        didPerformSetMutedCallAction
+      );
+      RNCallKeep.removeEventListener(
+        "didToggleHoldCallAction",
+        didToggleHoldCallAction
+      );
+      RNCallKeep.removeEventListener("endCall", endCall);
+    };
+  }, []);
 
   const initSinch = (userId, userDisplayName) => {
     CallManager.setupClient(
@@ -191,6 +174,15 @@ export default function App() {
       userDisplayName,
       false // use push notification
     );
+  };
+
+  const checkConnection = async () => {
+    const isStarted = await CallManager.checkStarted();
+    const userId = await CallManager.getUserId();
+    if (userId) {
+      setRegisteredName(userId);
+    }
+    console.log({ isStarted, userId });
   };
 
   if (isIOS && DeviceInfo.isEmulator()) {
@@ -205,13 +197,7 @@ export default function App() {
     <View style={styles.container}>
       <View style={styles.row}>
         <Text>{registeredName}</Text>
-        <Button
-          title="Is Started"
-          onPress={async () => {
-            const isStarted = await CallManager.checkStarted();
-            console.log({ isStarted });
-          }}
-        />
+        <Button title="Check connection" onPress={checkConnection} />
       </View>
       <View style={styles.spacer} />
 
@@ -227,7 +213,10 @@ export default function App() {
         <Button
           title="Connect"
           onPress={() => {
-            initSinch(userName, userName);
+            if (userName) {
+              initSinch(userName, userName);
+            }
+            setUserName("");
           }}
         />
       </View>
@@ -245,7 +234,9 @@ export default function App() {
         <Button
           title="Call"
           onPress={() => {
-            CallManager.callUserId(userToCall);
+            if (userToCall) {
+              CallManager.callUserId(userToCall);
+            }
           }}
         />
       </View>

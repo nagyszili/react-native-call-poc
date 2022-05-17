@@ -212,4 +212,9 @@ public class SinchVoipModule extends ReactContextBaseJavaModule implements Servi
     public void isStarted(final Promise promise) {
         promise.resolve(mSinchServiceInterface.isStarted());
     }
+
+    @ReactMethod
+    public void getUserId(final Promise promise) {
+        promise.resolve(mSinchServiceInterface.getUserId());
+    }
 }

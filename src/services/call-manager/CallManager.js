@@ -5,29 +5,44 @@ import {
   PermissionsAndroid,
 } from "react-native";
 import RNCallKeep from "react-native-callkeep";
+import Logger from "../../utils/logger";
 import Permissions from "../permissions";
+import SystemUI from "../system-ui";
 
 const NativeCallManager = NativeModules.CallManager;
-const NativeCallManagerEmitter = new NativeEventEmitter(CallManager);
 const SinchVoipEvents = new NativeEventEmitter(SinchVoip);
+
 const { SinchVoip } = NativeModules;
 
 const initialize = () => {
-  RNCallKeep.addEventListener("answerCall", answerCall);
-  RNCallKeep.addEventListener("didPerformDTMFAction", didPerformDTMFAction);
-  RNCallKeep.addEventListener(
-    "didReceiveStartCallAction",
-    didReceiveStartCallAction
-  );
-  RNCallKeep.addEventListener(
-    "didPerformSetMutedCallAction",
-    didPerformSetMutedCallAction
-  );
-  RNCallKeep.addEventListener(
-    "didToggleHoldCallAction",
-    didToggleHoldCallAction
-  );
-  RNCallKeep.addEventListener("endCall", endCall);
+  return Promise((resolve, reject) => {
+    SystemUI.initialize()
+      .then(() => {
+        SinchVoipEvents.addListener("receiveIncomingCall", (call) => {
+          Logger.info("Incoming call received", call);
+          // displayIncomingCall(call);
+        });
+        RNCallKeep.addEventListener("answerCall", answerCall);
+        RNCallKeep.addEventListener(
+          "didPerformDTMFAction",
+          didPerformDTMFAction
+        );
+        RNCallKeep.addEventListener(
+          "didReceiveStartCallAction",
+          didReceiveStartCallAction
+        );
+        RNCallKeep.addEventListener(
+          "didPerformSetMutedCallAction",
+          didPerformSetMutedCallAction
+        );
+        RNCallKeep.addEventListener(
+          "didToggleHoldCallAction",
+          didToggleHoldCallAction
+        );
+        RNCallKeep.addEventListener("endCall", endCall);
+      })
+      .catch(() => {});
+  });
 };
 
 const setup = (userName = "") => {
@@ -47,97 +62,51 @@ const updateDisplay = (callUUID) => {
     RNCallKeep.updateDisplay(callUUID, number, "New Name");
   }
 
-  log(`[updateDisplay: ${number}] ${format(callUUID)}`);
+  Logger.info(`[updateDisplay: ${number}] ${format(callUUID)}`);
 };
 
 const answerCall = ({ callUUID }) => {
   const number = calls[callUUID];
-  log(`[answerCall] ${format(callUUID)}, number: ${number}`);
+  Logger.info(`[answerCall] ${format(callUUID)}, number: ${number}`);
 
   RNCallKeep.startCall(callUUID, number, number);
 
   BackgroundTimer.setTimeout(() => {
-    log(`[setCurrentCallActive] ${format(callUUID)}, number: ${number}`);
+    Logger.info(
+      `[setCurrentCallActive] ${format(callUUID)}, number: ${number}`
+    );
     RNCallKeep.setCurrentCallActive(callUUID);
   }, 1000);
 };
 
 const didPerformDTMFAction = ({ callUUID, digits }) => {
   const number = calls[callUUID];
-  log(
+  Logger.info(
     `[didPerformDTMFAction] ${format(callUUID)}, number: ${number} (${digits})`
   );
 };
 
-export const hasCameraPermission = async () => {
-  if (Platform.OS === "android") {
-    try {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.CAMERA
-      );
-      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        console.log("You can use the camera");
-        return true;
-      } else {
-        console.log("Camera permission denied");
-        return false;
-      }
-    } catch (err) {
-      console.warn(err);
-    }
-  }
-  return true;
-};
-
-export const hasAudioPermission = async () => {
-  if (Platform.OS === "android") {
-    try {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.RECORD_AUDIO
-      );
-      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        console.log("You can record audio");
-        return true;
-      } else {
-        console.log("Audio record permission denied");
-        return false;
-      }
-    } catch (err) {
-      console.warn(err);
-    }
-  }
-  return true;
-};
-
-export const hasPermissions = async () => {
-  if (Platform.OS === "android") {
-    const granted = await PermissionsAndroid.requestMultiple([
-      PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
-      PermissionsAndroid.PERMISSIONS.CAMERA,
-      PermissionsAndroid.PERMISSIONS.READ_PHONE_STATE,
-    ]);
-    if (
-      granted["android.permission.RECORD_AUDIO"] ===
-        PermissionsAndroid.RESULTS.GRANTED &&
-      granted["android.permission.CAMERA"] ===
-        PermissionsAndroid.RESULTS.GRANTED &&
-      granted["android.permission.READ_PHONE_STATE"] ===
-        PermissionsAndroid.RESULTS.GRANTED
-    ) {
-      return true;
-    }
-    return false;
-  }
-  return true;
+const displayIncomingCall = ({
+  systemId,
+  caller,
+  callerName,
+  isVideo = false,
+}) => {
+  return RNCallKeep.displayIncomingCall(
+    systemId,
+    caller,
+    callerName,
+    "generic", //number, email
+    isVideo
+  );
 };
 
 export const CallManager = (() => {
-  // let sound: Sound
-
   return {
+    callerName: "",
     eventEmitter: SinchVoipEvents,
     isStarted: false,
-    hasPermissions,
+    initialize,
     setupClient(
       sinchAppKey,
       sinchAppSecret,
@@ -203,6 +172,9 @@ export const CallManager = (() => {
     },
     checkStarted() {
       return SinchVoip.isStarted();
+    },
+    getUserId() {
+      return SinchVoip.getUserId();
     },
   };
 })();
