@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "e start": "expo start --dev-client",
-    "e android": "expo run:android",
-    "e ios": "expo run:ios",
+    "e:start": "expo start --dev-client",
+    "e:android": "expo run:android",
+    "e:ios": "expo run:ios",
     "web": "expo start --web",
     "start": "react-native start",
     "android": "react-native run-android",
