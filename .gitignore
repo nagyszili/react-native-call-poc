@@ -21,7 +21,7 @@ DerivedData
 *.ipa
 *.xcuserstate
 project.xcworkspace
-
+.env*
 # Android/IntelliJ
 #
 build/
@@ -30,6 +30,7 @@ build/
 local.properties
 *.iml
 *.hprof
+android/app/src/main/assets/config.json
 
 # node.js
 #

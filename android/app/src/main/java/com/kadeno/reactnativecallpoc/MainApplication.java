@@ -1,6 +1,7 @@
 package com.kadeno.reactnativecallpoc;
 
 import android.app.Application;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.res.Configuration;
 import androidx.annotation.NonNull;
@@ -12,6 +13,7 @@ import com.facebook.react.ReactNativeHost;
 import com.facebook.react.ReactPackage;
 import com.facebook.react.config.ReactFeatureFlags;
 import com.facebook.soloader.SoLoader;
+import com.kadeno.reactnativecallpoc.CallManager.CallManagerPackage;
 import com.kadeno.reactnativecallpoc.newarchitecture.MainApplicationReactNativeHost;
 
 import expo.modules.ApplicationLifecycleDispatcher;
@@ -34,7 +36,7 @@ public class MainApplication extends Application implements ReactApplication {
       @SuppressWarnings("UnnecessaryLocalVariable")
       List<ReactPackage> packages = new PackageList(this).getPackages();
       // Packages that cannot be autolinked yet can be added manually here, for example:
-      // packages.add(new MyReactNativePackage());
+      packages.add(new CallManagerPackage());
       return packages;
     }
 

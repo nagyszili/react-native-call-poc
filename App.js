@@ -6,11 +6,14 @@ import {
   View,
   TouchableOpacity,
   ScrollView,
+  TextInput,
+  Button,
 } from "react-native";
 import uuid from "uuid";
 import RNCallKeep from "react-native-callkeep";
 import BackgroundTimer from "react-native-background-timer";
 import DeviceInfo from "react-native-device-info";
+import CallManager from "./src/services/call-manager/CallManager";
 
 BackgroundTimer.start();
 
@@ -41,6 +44,7 @@ export default function App() {
   const [heldCalls, setHeldCalls] = useState({}); // callKeep uuid: held
   const [mutedCalls, setMutedCalls] = useState({}); // callKeep uuid: muted
   const [calls, setCalls] = useState({}); // callKeep uuid: number
+  const [userName, setUserName] = useState("");
 
   const log = (text) => {
     console.info(text);
@@ -253,6 +257,22 @@ export default function App() {
         <Text>Display incoming call now in 3s</Text>
       </TouchableOpacity>
 
+      <View style={styles.row}>
+        <TextInput
+          placeholder="Set User Name"
+          value={userName}
+          onChangeText={(text) => {
+            setUserName(text);
+          }}
+        />
+        <Button
+          title="Connect"
+          onPress={() => {
+            CallManager.setup(userName);
+          }}
+        />
+      </View>
+
       {Object.keys(calls).map((callUUID) => (
         <View key={callUUID} style={styles.callButtons}>
           <TouchableOpacity
@@ -324,5 +344,8 @@ const styles = StyleSheet.create({
   },
   log: {
     fontSize: 10,
+  },
+  row: {
+    flexDirection: "row",
   },
 });
