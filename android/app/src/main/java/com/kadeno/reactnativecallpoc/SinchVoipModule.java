@@ -19,7 +19,9 @@ import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.module.annotations.ReactModule;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.bridge.Promise;
+import com.kadeno.reactnativecallpoc.utils.JSEvent;
 import com.sinch.android.rtc.calling.Call;
+import com.sinch.android.rtc.calling.CallDetails;
 
 
 import static android.content.Context.BIND_AUTO_CREATE;
@@ -66,18 +68,22 @@ public class SinchVoipModule extends ReactContextBaseJavaModule implements Servi
                            String eventName,
                            @Nullable WritableMap params) {
 
-        reactContext
-                .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                .emit(eventName, params);
+        JSEvent.emit(reactContext, eventName, params);
+//        reactContext
+//                .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+//                .emit(eventName, params);
+
     }
 
     public static void sendEvent(
             String eventName,
             @Nullable WritableMap params) {
 
-        mContext
-                .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                .emit(eventName, params);
+        JSEvent.emit(mContext, eventName, params);
+
+//        mContext
+//                .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+//                .emit(eventName, params);
     }
 
 
@@ -93,10 +99,10 @@ public class SinchVoipModule extends ReactContextBaseJavaModule implements Servi
         try {
             mSinchServiceInterface.startClient(applicationKey, applicationSecret, environmentHost, userId, userDisplayName, usePushNotification);
 
-           boolean isStarted = mSinchServiceInterface.isStarted();
-           Log.d(TAG,"isStarted"+isStarted);
+            boolean isStarted = mSinchServiceInterface.isStarted();
+            Log.d(TAG, "isStarted" + isStarted);
         } catch (Exception e) {
-            Log.e(TAG, "failed to start client"+ e.getMessage());
+            Log.e(TAG, "failed to start client" + e.getMessage());
         }
     }
 
@@ -109,19 +115,31 @@ public class SinchVoipModule extends ReactContextBaseJavaModule implements Servi
 
     @ReactMethod
     public void callUserWithIdUsingVideo(String userId) {
-        Log.d("SinchVoip", "CallUserUsingVideo");
+        Log.d(TAG, "CallUserUsingVideo userId: " + userId);
         mSinchServiceInterface.callUser(userId, true);
     }
 
     @ReactMethod
-    public void callUserWithId(String userId) {
-        Log.d("SinchVoip", "CallUser");
-        mSinchServiceInterface.callUser(userId, false);
+    public void callUserWithId(String userId, Promise promise) {
+        Log.d(TAG, "callUserWithId userId: " + userId);
+        try {
+            Call call = mSinchServiceInterface.callUser(userId, false);
+            String callId = call.getCallId();
+            CallDetails callDetails =  call.getDetails();
+            Log.d(TAG, "call started callId: " + callId);
+
+            WritableMap callData = Arguments.createMap();
+            callData.putString("callId", callId);
+
+            promise.resolve(callData);
+        } catch (Exception e) {
+            promise.reject(e);
+        }
     }
 
     @ReactMethod
     public void hangup() {
-        Log.d("SinchVoip", "hangup");
+        Log.d(TAG, "hangup");
         Call call = mSinchServiceInterface.getCall();
         if (call != null) {
             call.hangup();
@@ -130,7 +148,7 @@ public class SinchVoipModule extends ReactContextBaseJavaModule implements Servi
 
     @ReactMethod
     public void answer() {
-        Log.d("SinchVoip", "hangup");
+        Log.d(TAG, "answer");
         Call call = mSinchServiceInterface.getCall();
         if (call != null) {
             call.answer();
@@ -139,26 +157,36 @@ public class SinchVoipModule extends ReactContextBaseJavaModule implements Servi
 
     @ReactMethod
     public void mute() {
+        Log.d(TAG, "mute");
+
         mSinchServiceInterface.getAudioController().mute();
     }
 
     @ReactMethod
-    public void unmute() {
+    public void unMute() {
+        Log.d(TAG, "unMute");
+
         mSinchServiceInterface.getAudioController().unmute();
     }
 
     @ReactMethod
     public void enableSpeaker() {
+        Log.d(TAG, "enableSpeaker");
+
         mSinchServiceInterface.getAudioController().enableSpeaker();
     }
 
     @ReactMethod
     public void disableSpeaker() {
+        Log.d(TAG, "disableSpeaker");
+
         mSinchServiceInterface.getAudioController().disableSpeaker();
     }
 
     @ReactMethod
     public void pauseVideo() {
+        Log.d(TAG, "pauseVideo");
+
         Call call = mSinchServiceInterface.getCall();
         if (call != null) {
             call.pauseVideo();
@@ -167,6 +195,8 @@ public class SinchVoipModule extends ReactContextBaseJavaModule implements Servi
 
     @ReactMethod
     public void resumeVideo() {
+        Log.d(TAG, "resumeVideo");
+
         Call call = mSinchServiceInterface.getCall();
         if (call != null) {
             call.resumeVideo();
@@ -175,11 +205,14 @@ public class SinchVoipModule extends ReactContextBaseJavaModule implements Servi
 
     @ReactMethod
     public void switchCamera() {
+        Log.d(TAG, "switchCamera");
+
         mSinchServiceInterface.getVideoController().toggleCaptureDevicePosition();
     }
 
     @ReactMethod
     public void hasCurrentEstablishedCall() {
+        Log.d(TAG, "hasCurrentEstablishedCall");
         Call call = mSinchServiceInterface.getCall();
         if (call != null) {
             WritableMap params = Arguments.createMap();
@@ -192,12 +225,21 @@ public class SinchVoipModule extends ReactContextBaseJavaModule implements Servi
     }
 
     @ReactMethod
+    public void startListeningOnActiveConnection() {
+        Log.d(TAG, "startListeningOnActiveConnection not implemented");
+    }
+
+    @ReactMethod
     public void stopListeningOnActiveConnection() {
+        Log.d(TAG, "stopListeningOnActiveConnection");
+
         mSinchServiceInterface.stopClient();
     }
 
     @ReactMethod
-    public void reportIncommingCallFromPush(ReadableMap remoteMessage) {
+    public void reportIncomingCallFromPush(ReadableMap remoteMessage) {
+        Log.d(TAG, "reportIncomingCallFromPush");
+
         if (remoteMessage.hasKey("sinch")) {
             try {
                 mSinchServiceInterface.relayRemotePushNotificationPayload(remoteMessage.getString("sinch"));
@@ -210,11 +252,14 @@ public class SinchVoipModule extends ReactContextBaseJavaModule implements Servi
 
     @ReactMethod
     public void isStarted(final Promise promise) {
+        Log.d(TAG, "isStarted");
+
         promise.resolve(mSinchServiceInterface.isStarted());
     }
 
     @ReactMethod
     public void getUserId(final Promise promise) {
-        promise.resolve(mSinchServiceInterface.getUserId());
+        Log.d(TAG, "getUserId");
+        promise.resolve(mSinchServiceInterface.getLocalUserId());
     }
 }

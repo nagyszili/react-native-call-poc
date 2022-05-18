@@ -1,6 +1,7 @@
 import RNCallKeep from "react-native-callkeep";
 import { NativeModules, NativeEventEmitter, Platform } from "react-native";
 import Logger from "../../utils/logger";
+import Permissions from "../permissions";
 
 const NativeCallManager = NativeModules.CallManager;
 const NativeCallManagerEmitter = new NativeEventEmitter(NativeCallManager);
@@ -36,6 +37,7 @@ const initialize = async () => {
     // Ask for permissions
     Permissions.requestPermissions()
       .then(() => {
+        Logger.debug("SystemUI - permissions granted");
         RNCallKeep.setup({
           android: {
             // selfManaged: true,
@@ -60,10 +62,10 @@ const initialize = async () => {
             // },
           },
           ios: {
-            appName: APP_NAME,
-            maximumCallGroups: "1",
-            maximumCallsPerCallGroup: "1",
-            includesCallsInRecents: false,
+            appName: "CallKeep",
+            // maximumCallGroups: "1",
+            // maximumCallsPerCallGroup: "1",
+            // includesCallsInRecents: false,
           },
         })
           .then(async (result) => {
@@ -82,11 +84,16 @@ const initialize = async () => {
             //   const isConn = await RNCallKeep.isConnectionServiceAvailable();
             //   Logger.info('after setup', { hasDefPA, paEnabled, isConn });
             // }
+            Logger.debug("SystemUI - initialized", { result });
             resolve(result);
           })
-          .catch((error) => reject(error));
+          .catch((error) => {
+            Logger.error("SystemUI - initialize failed", { error });
+            reject(error);
+          });
       })
       .catch((error) => {
+        Logger.error("SystemUI - permissions", { error });
         reject(error);
       });
   });
@@ -125,9 +132,149 @@ const addListener = (event, callback) => {
   };
 };
 
+/**
+ * Display incoming call
+ *
+ * @param {Object} config
+ * @param {string} config.callId - The system ID of the call
+ * @param {string} config.caller - The identifier of the caller
+ * @param {string} config.callerName - The name of the caller
+ * @param {boolean} config.isVideo - Boolean for a video call
+ */
+const displayIncomingCall = ({
+  callId,
+  caller,
+  callerName,
+  isVideo = false,
+}) => {
+  Logger.debug("SystemUI - display incoming call", {
+    callId,
+    caller,
+    callerName,
+    isVideo,
+  });
+  return RNCallKeep.displayIncomingCall(
+    callId,
+    caller,
+    callerName,
+    "generic",
+    isVideo,
+    {
+      ios: {
+        supportsGrouping: false,
+        supportsUngrouping: false,
+        supportsHolding: false,
+      },
+    }
+  );
+};
+
+/**
+ * Start an outgoing call
+ *
+ * @param {Object} config
+ * @param {string} config.callId - The system ID of the call
+ * @param {string} config.caller - The identifier of the caller
+ * @param {string} config.callerName - The name of the caller
+ * @param {boolean} config.isVideo - Boolean for a video call
+ */
+const startOutgoingCall = ({ callId, caller, callerName, isVideo = false }) => {
+  Logger.debug("SystemUI - start outgoing call", {
+    callId,
+    caller,
+    callerName,
+    isVideo,
+  });
+
+  return RNCallKeep.startCall(callId, caller, callerName, "generic", isVideo);
+};
+
+/**
+ * Update an outgoing call
+ *
+ * @param {Object} config
+ * @param {string} config.callId - The system ID of the call
+ */
+const updateOutgoingCall = ({ callId }) => {
+  Logger.debug("SystemUI - update outgoing call", {
+    callId,
+  });
+
+  return RNCallKeep.answerIncomingCall(callId);
+};
+
+const updateDisplay = ({ callId, caller, callerName }) => {
+  // Workaround because Android doesn't display well displayName, se we have to switch ...
+  if (Platform.OS === "ios") {
+    RNCallKeep.updateDisplay(callId, callerName, caller);
+  } else {
+    RNCallKeep.updateDisplay(callId, caller, callerName);
+  }
+};
+
+/**
+ * Answer an incoming call
+ *
+ * @param {Object} config
+ * @param {string} config.callId - The system ID of the call
+ */
+const answerIncomingCall = ({ callId }) => {
+  Logger.debug("SystemUI - answer incoming call", {
+    callId,
+  });
+
+  return RNCallKeep.answerIncomingCall(callId);
+};
+
+/**
+ * Reject an incoming call
+ *
+ * @param {Object} config
+ * @param {string} config.callId - The system ID of the call
+ */
+const rejectCall = ({ callId }) => {
+  Logger.debug("SystemUI - reject call", {
+    callId,
+  });
+
+  return RNCallKeep.endCall(callId);
+};
+
+/**
+ * End a call
+ *
+ * @param {Object} config
+ * @param {string} config.callId - The system ID of the call
+ */
+const endCall = ({ callId }) => {
+  Logger.debug("SystemUI - end call", {
+    callId,
+  });
+
+  return RNCallKeep.endCall(callId);
+};
+
+/**
+ * End all calls
+ * @returns {void}
+ */
+const endAllCalls = () => {
+  Logger.debug("SystemUI - end all calls");
+  RNCallKeep.endAllCalls();
+};
+
 const SystemUI = {
+  EVENTS,
   initialize,
   addListener,
+  displayIncomingCall,
+  startOutgoingCall,
+  updateOutgoingCall,
+  updateDisplay,
+  answerIncomingCall,
+  rejectCall,
+  endCall,
+  endAllCalls,
 };
 
 export default SystemUI;

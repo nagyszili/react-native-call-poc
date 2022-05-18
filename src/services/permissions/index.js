@@ -1,6 +1,6 @@
 import { PermissionsAndroid, Platform } from "react-native";
 
-const requestCameraPermission = async () => {
+const requestPermissions = async () => {
   try {
     const granted = await PermissionsAndroid.requestMultiple([
       PermissionsAndroid.PERMISSIONS.CAMERA,
@@ -80,6 +80,6 @@ export const hasPermissions = async () => {
   return true;
 };
 const Permissions = {
-  requestCameraPermission,
+  requestPermissions,
 };
 export default Permissions;

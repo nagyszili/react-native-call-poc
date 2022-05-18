@@ -27,6 +27,7 @@ import androidx.core.app.NotificationManagerCompat;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.WritableMap;
+import com.kadeno.reactnativecallpoc.utils.JSEvent;
 import com.sinch.android.rtc.AudioController;
 import com.sinch.android.rtc.ClientRegistration;
 import com.sinch.android.rtc.MissingPermissionException;
@@ -181,7 +182,7 @@ public class SinchVoipService extends Service {
         String contentText = withVideo ? "Video call" : "Audio call";
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-//                .setSmallIcon(R.drawable.notification_icon)
+                .setSmallIcon(R.drawable.notification_icon)
                 .setContentTitle(callerName)
                 .setContentText(contentText)
                 .setPriority(NotificationCompat.PRIORITY_MAX)
@@ -303,10 +304,10 @@ public class SinchVoipService extends Service {
                 mSinchClient.addSinchClientListener(new MySinchClientListener());
                 mSinchClient.getCallClient().addCallClientListener(new SinchCallClientListener());
 
-//                if (usePushNotification) {
-//                    mSinchClient.setSupportManagedPush(true);
-//                    mSinchClient.setPushNotificationDisplayName("User " + finalUserName);
-//                }
+                if (usePushNotification) {
+                    mSinchClient.setSupportManagedPush(true);
+                    mSinchClient.setPushNotificationDisplayName("User " + finalUserName);
+                }
 
                 Boolean permissionsGranted = checkPermission();
 
@@ -456,32 +457,32 @@ public class SinchVoipService extends Service {
 
         @Override
         public void onPushTokenRegistered() {
-            Log.d(TAG,"onPushTokenRegistered");
+            Log.d(TAG, "onPushTokenRegistered");
 
         }
 
         @Override
         public void onPushTokenRegistrationFailed(SinchError sinchError) {
-            Log.e(TAG,"onPushTokenRegistrationFailed " + sinchError.getMessage());
+            Log.e(TAG, "onPushTokenRegistrationFailed " + sinchError.getMessage());
 
         }
 
         @Override
         public void onCredentialsRequired(ClientRegistration clientRegistration) {
-            Log.d(TAG,"onCredentialsRequired userId: " + userId + ", APP_KEY:"+ APP_KEY + ", APP_SECRET: " + APP_SECRET);
+            Log.d(TAG, "onCredentialsRequired userId: " + userId + ", APP_KEY:" + APP_KEY + ", APP_SECRET: " + APP_SECRET);
             clientRegistration.register(JWT.create(APP_KEY, APP_SECRET, userId));
 
         }
 
         @Override
         public void onUserRegistered() {
-            Log.d(TAG,"onUserRegistered");
+            Log.d(TAG, "onUserRegistered");
 
         }
 
         @Override
         public void onUserRegistrationFailed(SinchError sinchError) {
-            Log.e(TAG,"onUserRegistrationFailed "+ sinchError.getMessage());
+            Log.e(TAG, "onUserRegistrationFailed " + sinchError.getMessage());
         }
     }
 
@@ -489,7 +490,7 @@ public class SinchVoipService extends Service {
 
         @Override
         public void onIncomingCall(CallClient callClient, Call call) {
-            Log.d(TAG, "onIncomingCall: " + call.getCallId());
+            Log.d(TAG, "onIncomingCall: " + call.getCallId() + "userId" + call.getRemoteUserId() + "camera" + call.getDetails().isVideoOffered());
 
             Log.d(TAG, "headers: " + call.getHeaders().toString());
 
@@ -542,6 +543,7 @@ public class SinchVoipService extends Service {
             } else {
                 call = mSinchClient.getCallClient().callUser(userId);
             }
+            Log.d(TAG,"started call callId: " + call.getCallId());
             call.addCallListener(callListener);
             mCall = call;
             return call;
@@ -557,6 +559,10 @@ public class SinchVoipService extends Service {
 
         public String getUserId() {
             return userId;
+        }
+
+        public String getLocalUserId() {
+            return mSinchClient.getLocalUserId();
         }
 
         public VideoController getVideoController() {

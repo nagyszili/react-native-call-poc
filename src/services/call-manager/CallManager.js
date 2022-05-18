@@ -1,188 +1,171 @@
-import {
-  NativeModules,
-  NativeEventEmitter,
-  Platform,
-  PermissionsAndroid,
-} from "react-native";
-import RNCallKeep from "react-native-callkeep";
 import Logger from "../../utils/logger";
-import Permissions from "../permissions";
+import SinchManager from "../sinch-manager/SinchManager";
 import SystemUI from "../system-ui";
 
-const NativeCallManager = NativeModules.CallManager;
-const SinchVoipEvents = new NativeEventEmitter(SinchVoip);
-
-const { SinchVoip } = NativeModules;
-
-const initialize = () => {
-  return Promise((resolve, reject) => {
-    SystemUI.initialize()
-      .then(() => {
-        SinchVoipEvents.addListener("receiveIncomingCall", (call) => {
-          Logger.info("Incoming call received", call);
-          // displayIncomingCall(call);
-        });
-        RNCallKeep.addEventListener("answerCall", answerCall);
-        RNCallKeep.addEventListener(
-          "didPerformDTMFAction",
-          didPerformDTMFAction
-        );
-        RNCallKeep.addEventListener(
-          "didReceiveStartCallAction",
-          didReceiveStartCallAction
-        );
-        RNCallKeep.addEventListener(
-          "didPerformSetMutedCallAction",
-          didPerformSetMutedCallAction
-        );
-        RNCallKeep.addEventListener(
-          "didToggleHoldCallAction",
-          didToggleHoldCallAction
-        );
-        RNCallKeep.addEventListener("endCall", endCall);
-      })
-      .catch(() => {});
+const _receiveIncomingCallCb = (call) => {
+  Logger.info("Incoming call received", call);
+  const { callId, userId, camera } = call;
+  SystemUI.displayIncomingCall({
+    callId: callId,
+    caller: userId,
+    callerName: userId,
+    isVideo: camera,
   });
 };
 
-const setup = (userName = "") => {
-  NativeCallManager.setup(userName);
+const _answerCallCb = (call) => {
+  Logger.info("Answer incoming call", call);
+  const { callId, userId } = call || {};
+  SinchManager.answer(callId, userId);
 };
 
-const callUser = (userName = "") => {
-  NativeCallManager.callUser(userName);
+const _endCallCb = (call) => {
+  Logger.info("Call ended", call);
+  SinchManager.hangup();
 };
 
-const updateDisplay = (callUUID) => {
-  const number = calls[callUUID];
-  // Workaround because Android doesn't display well displayName, se we have to switch ...
-  if (isIOS) {
-    RNCallKeep.updateDisplay(callUUID, "New Name", number);
+let receiveIncomingCallListener = null;
+let answerCallListener = null;
+let endCallListener = null;
+
+const initialize = () => {
+  return new Promise((resolve, reject) => {
+    SystemUI.initialize()
+      .then(() => {
+        Logger.info("start add listeners");
+        receiveIncomingCallListener = SinchManager.addListener(
+          SinchManager.EVENTS.RECEIVE_INCOMING_CALL,
+          _receiveIncomingCallCb
+        );
+        answerCallListener = SystemUI.addListener(
+          SystemUI.EVENTS.ANSWER_CALL,
+          _answerCallCb
+        );
+        endCallListener = SystemUI.addListener(
+          SystemUI.EVENTS.END_CALL,
+          _endCallCb
+        );
+        // RNCallKeep.addEventListener(
+        //   "didPerformDTMFAction",
+        //   didPerformDTMFAction
+        // );
+        // RNCallKeep.addEventListener(
+        //   "didReceiveStartCallAction",
+        //   didReceiveStartCallAction
+        // );
+        // RNCallKeep.addEventListener(
+        //   "didPerformSetMutedCallAction",
+        //   didPerformSetMutedCallAction
+        // );
+        // RNCallKeep.addEventListener(
+        //   "didToggleHoldCallAction",
+        //   didToggleHoldCallAction
+        // );
+        // RNCallKeep.addEventListener("endCall", endCall);
+        Logger.info("listeners added");
+        resolve(true);
+      })
+      .catch((e) => {
+        Logger.info("failed to init", e);
+        reject(e);
+      });
+  });
+};
+
+const deinitialize = () => {
+  Logger.info("deinitialize");
+  if (receiveIncomingCallListener?.remove) {
+    receiveIncomingCallListener.remove();
+  }
+  if (answerCallListener?.remove) {
+    answerCallListener.remove();
+  }
+  if (endCallListener?.remove) {
+    endCallListener.remove();
+  }
+  // RNCallKeep.removeEventListener("answerCall", answerCall);
+  // RNCallKeep.removeEventListener(
+  //   "didPerformDTMFAction",
+  //   didPerformDTMFAction
+  // );
+  // RNCallKeep.removeEventListener(
+  //   "didReceiveStartCallAction",
+  //   didReceiveStartCallAction
+  // );
+  // RNCallKeep.removeEventListener(
+  //   "didPerformSetMutedCallAction",
+  //   didPerformSetMutedCallAction
+  // );
+  // RNCallKeep.removeEventListener(
+  //   "didToggleHoldCallAction",
+  //   didToggleHoldCallAction
+  // );
+  // RNCallKeep.removeEventListener("endCall", endCall);
+};
+
+const startCall = async ({ userId, isVideo = false }) => {
+  Logger.info("start call", { userId, isVideo });
+  let call = null;
+  if (isVideo) {
+    call = await SystemUI.startVideoCall(userId);
   } else {
-    RNCallKeep.updateDisplay(callUUID, number, "New Name");
+    call = await SinchManager.callUser(userId);
+  }
+  Logger.info("Call started", call);
+  if (call) {
+    const { callId } = call || {};
+    SystemUI.startOutgoingCall({
+      callId,
+      caller: userId,
+      callerName: userId,
+      isVideo,
+    });
   }
 
-  Logger.info(`[updateDisplay: ${number}] ${format(callUUID)}`);
+  return call;
 };
 
-const answerCall = ({ callUUID }) => {
-  const number = calls[callUUID];
-  Logger.info(`[answerCall] ${format(callUUID)}, number: ${number}`);
-
-  RNCallKeep.startCall(callUUID, number, number);
-
-  BackgroundTimer.setTimeout(() => {
-    Logger.info(
-      `[setCurrentCallActive] ${format(callUUID)}, number: ${number}`
-    );
-    RNCallKeep.setCurrentCallActive(callUUID);
-  }, 1000);
-};
-
-const didPerformDTMFAction = ({ callUUID, digits }) => {
-  const number = calls[callUUID];
-  Logger.info(
-    `[didPerformDTMFAction] ${format(callUUID)}, number: ${number} (${digits})`
-  );
-};
-
-const displayIncomingCall = ({
-  systemId,
-  caller,
-  callerName,
-  isVideo = false,
+const setup = ({
+  sinchAppKey,
+  sinchAppSecret,
+  sinchHostName,
+  userId,
+  userDisplayName,
+  usePushNotification = false,
 }) => {
-  return RNCallKeep.displayIncomingCall(
-    systemId,
-    caller,
-    callerName,
-    "generic", //number, email
-    isVideo
+  return SinchManager.setup(
+    sinchAppKey,
+    sinchAppSecret,
+    sinchHostName,
+    userId,
+    userDisplayName,
+    usePushNotification
   );
 };
 
-export const CallManager = (() => {
-  return {
-    callerName: "",
-    eventEmitter: SinchVoipEvents,
-    isStarted: false,
-    initialize,
-    setupClient(
-      sinchAppKey,
-      sinchAppSecret,
-      sinchHostName,
-      userId,
-      userDisplayName,
-      usePushNotification = false
-    ) {
-      if (!CallManager.isStarted) {
-        Permissions.requestCameraPermission().then(() => {
-          SinchVoip.initClient(
-            sinchAppKey,
-            sinchAppSecret,
-            sinchHostName,
-            userId,
-            userDisplayName,
-            usePushNotification
-          );
+const getRegisteredName = async () => {
+  const isStarted = await SinchManager.checkStarted();
+  if (isStarted) {
+    return SinchManager.getUserId();
+  }
+  return false;
+};
 
-          CallManager.isStarted = true;
-        });
-      }
-    },
-    callUserId(userId) {
-      SinchVoip.callUserWithId(userId);
-    },
-    videoCallUserId(userId) {
-      SinchVoip.callUserWithIdUsingVideo(userId);
-    },
-    startListeningIncomingCalls() {
-      SinchVoip.startListeningOnActiveConnection();
-    },
-    stopListeningIncomingCalls() {
-      SinchVoip.stopListeningOnActiveConnection();
-    },
-    terminate() {
-      SinchVoip.terminate();
-      CallManager.isStarted = false;
-    },
-    answer() {
-      SinchVoip.answer();
-    },
-    hangup() {
-      SinchVoip.hangup();
-    },
-    mute() {
-      SinchVoip.mute();
-    },
-    unmute() {
-      SinchVoip.unmute();
-    },
-    enableSpeaker() {
-      SinchVoip.enableSpeaker();
-    },
-    disableSpeaker() {
-      SinchVoip.disableSpeaker();
-    },
-    enableCamera() {
-      SinchVoip.resumeVideo();
-    },
-    disableCamera() {
-      SinchVoip.pauseVideo();
-    },
-    checkStarted() {
-      return SinchVoip.isStarted();
-    },
-    getUserId() {
-      return SinchVoip.getUserId();
-    },
-  };
-})();
+const terminate = async () => {
+  const isStarted = await SinchManager.checkStarted();
+  if (isStarted) {
+    return CallManager.terminate();
+  }
+  return false;
+};
 
-// const CallManager = {
-//   initialize,
-//   setup,
-//   callUser,
-// };
+const CallManager = {
+  initialize,
+  deinitialize,
+  setup,
+  startCall,
+  getRegisteredName,
+  terminate,
+};
 
 export default CallManager;

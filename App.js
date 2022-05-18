@@ -12,6 +12,7 @@ import BackgroundTimer from "react-native-background-timer";
 import DeviceInfo from "react-native-device-info";
 import CallManager from "./src/services/call-manager/CallManager";
 import { format, getNewUuid, getRandomNumber } from "./src/utils";
+import Logger from "./src/utils/logger";
 
 BackgroundTimer.start();
 
@@ -143,46 +144,39 @@ export default function App() {
   };
 
   useEffect(() => {
+    CallManager.initialize()
+      .then(() => {
+        Logger.info("CallManager initialized");
+      })
+      .catch((e) => {
+        Logger.error("CallManager initialization failed", e);
+      });
     return () => {
-      RNCallKeep.removeEventListener("answerCall", answerCall);
-      RNCallKeep.removeEventListener(
-        "didPerformDTMFAction",
-        didPerformDTMFAction
-      );
-      RNCallKeep.removeEventListener(
-        "didReceiveStartCallAction",
-        didReceiveStartCallAction
-      );
-      RNCallKeep.removeEventListener(
-        "didPerformSetMutedCallAction",
-        didPerformSetMutedCallAction
-      );
-      RNCallKeep.removeEventListener(
-        "didToggleHoldCallAction",
-        didToggleHoldCallAction
-      );
-      RNCallKeep.removeEventListener("endCall", endCall);
+      CallManager.deinitialize();
     };
   }, []);
 
   const initSinch = (userId, userDisplayName) => {
-    CallManager.setupClient(
-      APP_KEY,
-      APP_SECRET,
-      ENVIRONMENT,
+    CallManager.setup({
+      sinchAppKey: APP_KEY,
+      sinchAppSecret: APP_SECRET,
+      sinchHostName: ENVIRONMENT,
       userId,
       userDisplayName,
-      false // use push notification
-    );
+      usePushNotification: false,
+    });
   };
 
   const checkConnection = async () => {
-    const isStarted = await CallManager.checkStarted();
-    const userId = await CallManager.getUserId();
+    const userId = await CallManager.getRegisteredName();
     if (userId) {
       setRegisteredName(userId);
     }
-    console.log({ isStarted, userId });
+    console.log({ userId });
+  };
+
+  const terminate = async () => {
+    CallManager.terminate();
   };
 
   if (isIOS && DeviceInfo.isEmulator()) {
@@ -197,9 +191,12 @@ export default function App() {
     <View style={styles.container}>
       <View style={styles.row}>
         <Text>{registeredName}</Text>
+        <View style={styles.wSpacer} />
         <Button title="Check connection" onPress={checkConnection} />
+        <View style={styles.wSpacer} />
+        <Button title="Stop" onPress={terminate} />
       </View>
-      <View style={styles.spacer} />
+      <View style={styles.hSpacer} />
 
       <View style={styles.row}>
         <TextInput
@@ -220,7 +217,7 @@ export default function App() {
           }}
         />
       </View>
-      <View style={styles.spacer} />
+      <View style={styles.hSpacer} />
 
       <View style={styles.row}>
         <TextInput
@@ -235,7 +232,7 @@ export default function App() {
           title="Call"
           onPress={() => {
             if (userToCall) {
-              CallManager.callUserId(userToCall);
+              CallManager.startCall({ userId: userToCall });
             }
           }}
         />
@@ -275,7 +272,10 @@ const styles = StyleSheet.create({
   input: {
     marginHorizontal: 10,
   },
-  spacer: {
+  hSpacer: {
     height: 10,
+  },
+  wSpacer: {
+    width: 10,
   },
 });
