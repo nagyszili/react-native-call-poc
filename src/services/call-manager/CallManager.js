@@ -1,15 +1,17 @@
+import { navigate } from "../../../App";
 import Logger from "../../utils/logger";
 import SinchManager from "../sinch-manager/SinchManager";
-import SystemUI from "../system-ui";
+import SystemUI from "../system-ui/system-ui";
 
 const _receiveIncomingCallCb = (call) => {
   Logger.info("Incoming call received", call);
-  const { callId, userId, camera } = call;
+  const { callId, userId, isVideo } = call;
+
   SystemUI.displayIncomingCall({
     callId: callId,
     caller: userId,
     callerName: userId,
-    isVideo: camera,
+    isVideo: isVideo,
   });
 };
 
@@ -19,8 +21,28 @@ const _answerCallCb = (call) => {
   SinchManager.answer(callId, userId);
 };
 
+const _callEstablishedCb = (call) => {
+  Logger.info("Call established", call);
+  const { callId, isVideo } = call || {};
+
+  SystemUI.updateDisplay({
+    callId,
+    caller: "caller",
+    callerName: "caller",
+  });
+  if (isVideo) {
+    navigate("CallScreen");
+  }
+};
+
+const _callEndedCb = (call) => {
+  Logger.info("Call ended by other user", call);
+  const { callId } = call || {};
+  SystemUI.reportEndCall({ callId });
+};
+
 const _endCallCb = (call) => {
-  Logger.info("Call ended", call);
+  Logger.info("Call ended by user", call);
   SinchManager.hangup();
 };
 
@@ -37,6 +59,12 @@ const initialize = () => {
           SinchManager.EVENTS.RECEIVE_INCOMING_CALL,
           _receiveIncomingCallCb
         );
+        SinchManager.addListener(
+          SinchManager.EVENTS.CALL_ESTABLISHED,
+          _callEstablishedCb
+        );
+        SinchManager.addListener(SinchManager.EVENTS.CALL_ENDED, _callEndedCb);
+
         answerCallListener = SystemUI.addListener(
           SystemUI.EVENTS.ANSWER_CALL,
           _answerCallCb
@@ -105,20 +133,18 @@ const deinitialize = () => {
 
 const startCall = async ({ userId, isVideo = false }) => {
   Logger.info("start call", { userId, isVideo });
-  let call = null;
-  if (isVideo) {
-    call = await SystemUI.startVideoCall(userId);
-  } else {
-    call = await SinchManager.callUser(userId);
-  }
+
+  const call = await SinchManager.callUser({ userId, isVideo });
+
   Logger.info("Call started", call);
+
   if (call) {
-    const { callId } = call || {};
+    const { callId, isVideo: hasVideo } = call || {};
     SystemUI.startOutgoingCall({
       callId,
       caller: userId,
       callerName: userId,
-      isVideo,
+      isVideo: hasVideo,
     });
   }
 
@@ -159,6 +185,18 @@ const terminate = async () => {
   return false;
 };
 
+const switchCamera = () => {
+  SinchManager.switchCamera();
+};
+
+const answer = () => {
+  SinchManager.answer();
+};
+
+const hangup = () => {
+  SinchManager.hangup();
+};
+
 const CallManager = {
   initialize,
   deinitialize,
@@ -166,6 +204,9 @@ const CallManager = {
   startCall,
   getRegisteredName,
   terminate,
+  switchCamera,
+  answer,
+  hangup,
 };
 
 export default CallManager;

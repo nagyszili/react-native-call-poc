@@ -29,6 +29,7 @@ public class SinchVoipRemoteVideoManager extends SimpleViewManager {
 
         View remoteVideo = vc.getRemoteView();
         remoteVideo.setBackgroundColor(Color.YELLOW);
+        vc.setLocalVideoZOrder(true);
 
         return remoteVideo;
     }

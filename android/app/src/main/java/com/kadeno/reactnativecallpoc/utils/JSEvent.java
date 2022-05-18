@@ -9,6 +9,8 @@ import com.facebook.react.modules.core.DeviceEventManagerModule;
 public class JSEvent {
 
     public static String Receive_Incoming_Call = "receiveIncomingCall";
+    public static String Call_Established = "callEstablished";
+    public static String Call_Ended = "callEnded";
 
     private JSEvent() {
         // Cannot be instantiated

@@ -25,6 +25,15 @@ const EVENTS = {
   SHOW_INCOMING_CALL: "showIncomingCallUi",
 };
 
+const END_CALL_REASONS = {
+  FAILED: 1,
+  REMOTE_ENDED: 2,
+  UNANSWERED: 3,
+  ANSWERED_ELSEWHERE: 4,
+  DECLINED_ELSEWHERE: 5,
+  MISSED: 2,
+};
+
 /**
  * Initialize SystemUI service
  *
@@ -136,7 +145,7 @@ const addListener = (event, callback) => {
  * Display incoming call
  *
  * @param {Object} config
- * @param {string} config.callId - The system ID of the call
+ * @param {string} config.callId - The call ID of the call
  * @param {string} config.caller - The identifier of the caller
  * @param {string} config.callerName - The name of the caller
  * @param {boolean} config.isVideo - Boolean for a video call
@@ -173,7 +182,7 @@ const displayIncomingCall = ({
  * Start an outgoing call
  *
  * @param {Object} config
- * @param {string} config.callId - The system ID of the call
+ * @param {string} config.callId - The call ID of the call
  * @param {string} config.caller - The identifier of the caller
  * @param {string} config.callerName - The name of the caller
  * @param {boolean} config.isVideo - Boolean for a video call
@@ -193,7 +202,7 @@ const startOutgoingCall = ({ callId, caller, callerName, isVideo = false }) => {
  * Update an outgoing call
  *
  * @param {Object} config
- * @param {string} config.callId - The system ID of the call
+ * @param {string} config.callId - The call ID of the call
  */
 const updateOutgoingCall = ({ callId }) => {
   Logger.debug("SystemUI - update outgoing call", {
@@ -216,7 +225,7 @@ const updateDisplay = ({ callId, caller, callerName }) => {
  * Answer an incoming call
  *
  * @param {Object} config
- * @param {string} config.callId - The system ID of the call
+ * @param {string} config.callId - The call ID of the call
  */
 const answerIncomingCall = ({ callId }) => {
   Logger.debug("SystemUI - answer incoming call", {
@@ -230,7 +239,7 @@ const answerIncomingCall = ({ callId }) => {
  * Reject an incoming call
  *
  * @param {Object} config
- * @param {string} config.callId - The system ID of the call
+ * @param {string} config.callId - The call ID of the call
  */
 const rejectCall = ({ callId }) => {
   Logger.debug("SystemUI - reject call", {
@@ -241,10 +250,26 @@ const rejectCall = ({ callId }) => {
 };
 
 /**
+ * Report that a call ended without the user initiating
+ *
+ * @param {Object} config
+ * @param {string} config.callId - The call ID of the call
+ */
+const reportEndCall = ({ callId }) => {
+  const reason = END_CALL_REASONS.REMOTE_ENDED;
+  Logger.debug("SystemUI - report end call", {
+    callId,
+    reason,
+  });
+
+  return RNCallKeep.reportEndCallWithUUID(callId, reason);
+};
+
+/**
  * End a call
  *
  * @param {Object} config
- * @param {string} config.callId - The system ID of the call
+ * @param {string} config.callId - The call ID of the call
  */
 const endCall = ({ callId }) => {
   Logger.debug("SystemUI - end call", {
@@ -273,6 +298,7 @@ const SystemUI = {
   updateDisplay,
   answerIncomingCall,
   rejectCall,
+  reportEndCall,
   endCall,
   endAllCalls,
 };

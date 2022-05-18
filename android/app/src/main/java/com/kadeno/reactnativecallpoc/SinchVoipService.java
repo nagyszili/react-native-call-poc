@@ -39,6 +39,7 @@ import com.sinch.android.rtc.SinchError;
 import com.sinch.android.rtc.calling.Call;
 import com.sinch.android.rtc.calling.CallClient;
 import com.sinch.android.rtc.calling.CallClientListener;
+import com.sinch.android.rtc.calling.CallDetails;
 import com.sinch.android.rtc.internal.client.DefaultSinchClient;
 import com.sinch.android.rtc.video.VideoCallListener;
 import com.sinch.android.rtc.video.VideoController;
@@ -85,12 +86,14 @@ public class SinchVoipService extends Service {
             Log.d("SinchVoip", "onCallEstablished");
 
             WritableMap params = Arguments.createMap();
+            CallDetails callDetails = call.getDetails();
             params.putString("callId", call.getCallId());
+            params.putBoolean("isVideo", callDetails.isVideoOffered());
 
             // Close call notification if exists
             NotificationManagerCompat.from(getApplicationContext()).cancel(74);
 
-            SinchVoipModule.sendEvent("callEstablish", params);
+            SinchVoipModule.sendEvent(JSEvent.Call_Established, params);
 
         }
 
@@ -104,7 +107,7 @@ public class SinchVoipService extends Service {
             // Close call notification if exists
             NotificationManagerCompat.from(getApplicationContext()).cancel(74);
 
-            SinchVoipModule.sendEvent("callEnd", params);
+            SinchVoipModule.sendEvent(JSEvent.Call_Ended, params);
 
             if (call != null) {
                 call.hangup();
@@ -500,9 +503,9 @@ public class SinchVoipService extends Service {
             WritableMap params = Arguments.createMap();
             params.putString("callId", call.getCallId());
             params.putString("userId", call.getRemoteUserId());
-            params.putBoolean("camera", call.getDetails().isVideoOffered());
+            params.putBoolean("isVideo", call.getDetails().isVideoOffered());
 
-            SinchVoipModule.sendEvent("receiveIncomingCall", params);
+            SinchVoipModule.sendEvent(JSEvent.Receive_Incoming_Call, params);
 
             call.addCallListener(callListener);
             mCall = call;

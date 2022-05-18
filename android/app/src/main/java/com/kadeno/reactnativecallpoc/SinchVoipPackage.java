@@ -10,6 +10,7 @@ import com.facebook.react.ReactPackage;
 import com.facebook.react.bridge.NativeModule;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.uimanager.ViewManager;
+import com.kadeno.reactnativecallpoc.LocalCameraView.LocalCameraViewManager;
 
 public class SinchVoipPackage implements ReactPackage {
     @Override
@@ -21,7 +22,8 @@ public class SinchVoipPackage implements ReactPackage {
     public List<ViewManager> createViewManagers(ReactApplicationContext reactContext) {
         return Arrays.<ViewManager>asList(
                 new SinchVoipLocalVideoManager(),
-                new SinchVoipRemoteVideoManager()
+                new SinchVoipRemoteVideoManager(),
+                new LocalCameraViewManager()
         );
 
     }

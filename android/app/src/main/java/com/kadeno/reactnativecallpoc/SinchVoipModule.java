@@ -113,23 +113,20 @@ public class SinchVoipModule extends ReactContextBaseJavaModule implements Servi
         mSinchServiceInterface.stopClient();
     }
 
-    @ReactMethod
-    public void callUserWithIdUsingVideo(String userId) {
-        Log.d(TAG, "CallUserUsingVideo userId: " + userId);
-        mSinchServiceInterface.callUser(userId, true);
-    }
 
     @ReactMethod
-    public void callUserWithId(String userId, Promise promise) {
-        Log.d(TAG, "callUserWithId userId: " + userId);
+    public void callUser(String userId, boolean isVideo, Promise promise) {
+        Log.d(TAG, "callUser userId: " + userId + ", isVideo:" + isVideo);
         try {
-            Call call = mSinchServiceInterface.callUser(userId, false);
+            Call call = mSinchServiceInterface.callUser(userId, isVideo);
             String callId = call.getCallId();
-            CallDetails callDetails =  call.getDetails();
-            Log.d(TAG, "call started callId: " + callId);
+            CallDetails callDetails = call.getDetails();
+            boolean isVideoOffered = callDetails.isVideoOffered();
+            Log.d(TAG, "call started callId: " + callId + ", isVideoOffered: " + isVideoOffered);
 
             WritableMap callData = Arguments.createMap();
             callData.putString("callId", callId);
+            callData.putBoolean("isVideo", isVideoOffered);
 
             promise.resolve(callData);
         } catch (Exception e) {

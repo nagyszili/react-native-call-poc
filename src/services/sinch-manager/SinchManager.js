@@ -6,6 +6,8 @@ const SinchVoipEvents = new NativeEventEmitter(SinchVoip);
 
 const EVENTS = {
   RECEIVE_INCOMING_CALL: "receiveIncomingCall",
+  CALL_ESTABLISHED: "callEstablished",
+  CALL_ENDED: "callEnded",
 };
 
 const setup = (
@@ -41,12 +43,8 @@ const addListener = (event, callback) => {
   };
 };
 
-const callUser = (userId) => {
-  return SinchVoip.callUserWithId(userId);
-};
-
-const videoCallUser = (userId) => {
-  return SinchVoip.callUserWithIdUsingVideo(userId);
+const callUser = ({ userId, isVideo }) => {
+  return SinchVoip.callUser(userId, isVideo);
 };
 
 const startListeningIncomingCalls = () => {
@@ -104,6 +102,10 @@ const getUserId = () => {
   return SinchVoip.getUserId();
 };
 
+const switchCamera = () => {
+  return SinchVoip.switchCamera();
+};
+
 const SinchManager = {
   EVENTS,
   isStarted: false,
@@ -111,7 +113,6 @@ const SinchManager = {
   setup,
   addListener,
   callUser,
-  videoCallUser,
   startListeningIncomingCalls,
   stopListeningIncomingCalls,
   terminate,
@@ -125,6 +126,7 @@ const SinchManager = {
   disableCamera,
   checkStarted,
   getUserId,
+  switchCamera,
 };
 
 export default SinchManager;
